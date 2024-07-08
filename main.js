@@ -80,6 +80,12 @@ const downloadAndExtract = async (url, filePath, extractPath) => {
 };
 
 const main = async () => {
+    console.log("Deleting old files...");
+    let dir = path.join(__dirname, "emulators");
+    fs.readdirSync(dir).forEach((f) =>
+        !f.endsWith(".md") ? fs.rmSync(`${dir}/${f}`) : null
+    );
+    console.log("Old files deleted successfully.");
     Object.keys(emulators).forEach(async (emulator) => {
         const downloadLink = await getDownloadLink(emulators[emulator]);
         console.log(`Emulator: ${emulator}, URL: ${downloadLink}`);

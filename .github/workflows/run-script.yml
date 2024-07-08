@@ -1,0 +1,32 @@
+name: Run Script every hour
+
+on:
+    schedule:
+        - cron: "0 * * * *" # Runs every hour on the hour
+
+jobs:
+    run-npm-start:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: "14"
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run npm start
+              run: npm run start
+
+            - name: Commit and Push
+              run: |
+                  git config --global user.name 'owayys'
+                  git config --global user.email 'owais.ahsan@hotmail.com'
+                  git add emulators --force
+                  git commit -am "Updated Favorites"
+                  git push

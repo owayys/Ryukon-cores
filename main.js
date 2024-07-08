@@ -1,64 +1,27 @@
-// const axios = require("axios");
-// const fs = require("fs");
-// const { fullArchive } = require("node-7z-archive");
-// const path = require("path");
-
-import axios from "axios";
 import fs from "fs";
 import { extractFull } from "node-7z-forall";
 import path from "path";
 import { fileURLToPath } from "url";
+
+import { getDownloadLink, downloadFile, zipFiles } from "./util.js";
+import { emulators } from "./emulators.js";
+
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
-// URL of the 7z file
-const url =
-    "https://github.com/mgba-emu/mgba/releases/download/0.10.3/mGBA-0.10.3-win64.7z";
-// Path where the 7z file will be saved
-const filePath = path.join(__dirname, "mGBA.7z");
-// Path where the contents of the 7z file will be extracted
-const extractPath = path.join(__dirname, "mGBA");
-
-// Function to download the file
-const downloadFile = async (url, outputPath) => {
-    const writer = fs.createWriteStream(outputPath);
-    const response = await axios({
-        url,
-        method: "GET",
-        responseType: "stream",
-    });
-
-    response.data.pipe(writer);
-
-    return new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
-    });
-};
-
-const moveFiles = async (sourceDir, destDir) => {
-    const files = await fs.promises.readdir(sourceDir);
-    for (const file of files) {
-        const srcPath = path.join(sourceDir, file);
-        const destPath = path.join(destDir, file);
-        await fs.promises.rename(srcPath, destPath);
-    }
-};
-
-// Main function to download and extract the file
-const main = async () => {
+const downloadAndExtract = async (url, filePath, extractPath) => {
     try {
         console.log("Downloading file...");
         await downloadFile(url, filePath);
         console.log("File downloaded successfully.");
 
-        console.log("Extracting file...");
-        // extractFull(filePath, extractPath);
-        const extraction = extractFull(filePath, extractPath);
+        if (filePath.endsWith(".zip")) {
+            console.log("File is already .zip format. Skipping extraction.");
+            return;
+        }
 
-        extraction.progress(function (files) {
-            console.log("Some files are extracted: %s", files);
-        });
+        console.log("Extracting file...");
+        const extraction = extractFull(filePath, extractPath);
 
         extraction
             .then(async function () {
@@ -66,32 +29,69 @@ const main = async () => {
                 console.log("File extracted successfully.");
 
                 // Find the extracted folder (assuming there's only one)
-                const extractedFolders = await fs.promises.readdir(extractPath);
-                if (extractedFolders.length === 1) {
-                    const extractedFolderPath = path.join(
-                        extractPath,
-                        extractedFolders[0]
+                try {
+                    const extractedFolders = await fs.promises.readdir(
+                        extractPath
                     );
-                    console.log(
-                        `Moving contents of ${extractedFolderPath} to ${extractPath}`
-                    );
-                    await moveFiles(extractedFolderPath, extractPath);
+                    if (extractedFolders.length === 1) {
+                        const extractedFolderPath = path.join(
+                            extractPath,
+                            extractedFolders[0]
+                        );
+                        // console.log(
+                        //     `Moving contents of ${extractedFolderPath} to ${extractPath}`
+                        // );
+                        // await moveFiles(extractedFolderPath, extractPath);
+                        console.log("Zipping Contents...");
+                        await zipFiles(
+                            extractedFolderPath,
+                            `${extractPath}.zip`
+                        );
+                        console.log("Contents zipped successfully.");
 
-                    // Optionally remove the empty folder
-                    await fs.promises.rmdir(extractedFolderPath);
-                    console.log("Contents moved successfully.");
-                    await fs.promises.unlink(filePath);
-                    console.log("Downloaded 7z file deleted successfully.");
-                } else {
-                    console.log("Unexpected number of extracted folders.");
+                        await fs.promises.rmdir(extractedFolderPath);
+                        console.log("Contents moved successfully.");
+                    } else {
+                        // console.log("Unexpected number of extracted folders.");
+                        console.log("Zipping Contents...");
+                        await zipFiles(extractPath, `${extractPath}.zip`);
+                        console.log("Contents zipped successfully.");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
                 }
+
+                console.log("Deleting downloaded 7z file...");
+                await fs.promises.unlink(filePath);
+                console.log("Downloaded 7z file deleted successfully.");
+                // console.log("Zipping Contents...");
+                // await zipFiles(extractPath, `${extractPath}.zip`);
+                // console.log("Contents zipped successfully.");
+                console.log("Deleting extracted folder...");
+                await fs.promises.rmdir(extractPath, { recursive: true });
+                console.log("Extracted folder deleted successfully.");
             })
             .catch(function (err) {
-                console.error(err);
+                console.log(err);
             });
     } catch (error) {
         console.error("Error:", error);
     }
+};
+
+const main = async () => {
+    Object.keys(emulators).forEach(async (emulator) => {
+        const downloadLink = await getDownloadLink(emulators[emulator]);
+        console.log(`Emulator: ${emulator}, URL: ${downloadLink}`);
+        console.log(downloadLink);
+        const filePath = path.join(
+            __dirname,
+            `emulators/${emulator}.${downloadLink.split(".").slice(-1)[0]}`
+        );
+        const extractPath = path.join(__dirname, `emulators/${emulator}`);
+        await downloadAndExtract(downloadLink, filePath, extractPath);
+        console.log(`Download and extraction for ${emulator} complete!`);
+    });
 };
 
 main();

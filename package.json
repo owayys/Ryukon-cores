@@ -5,7 +5,7 @@
         "axios": "^1.7.2",
         "node-7z-forall": "^2.1.5"
     },
-    "name": "ryukon-emulators",
+    "name": "ryukon-cores",
     "version": "1.0.0",
     "description": "Emulator download service for Ryukon",
     "main": "main.js",

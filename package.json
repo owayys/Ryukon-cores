@@ -5,9 +5,9 @@
         "axios": "^1.7.2",
         "node-7z-forall": "^2.1.5"
     },
-    "name": "ketsugo-emulators",
+    "name": "ryukon-emulators",
     "version": "1.0.0",
-    "description": "Emulator download service for Ketsugo",
+    "description": "Emulator download service for Ryukon",
     "main": "main.js",
     "scripts": {
         "start": "node main.js",
@@ -15,12 +15,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/owayys/Ketsugo-Emulators.git"
+        "url": "git+https://github.com/owayys/Ryukon-cores.git"
     },
     "author": "owayys",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/owayys/Ketsugo-Emulators/issues"
+        "url": "https://github.com/owayys/Ryukon-cores/issues"
     },
-    "homepage": "https://github.com/owayys/Ketsugo-Emulators#readme"
+    "homepage": "https://github.com/owayys/Ryukon-cores#readme"
 }

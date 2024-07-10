@@ -2,9 +2,10 @@ name: Run Script every hour
 
 on:
     schedule:
-        - cron: "10 * * * *" # Runs every Sunday at 6:05
+        - cron: "30 * * * *"
+
 env:
-    USE_SYSTEM_7ZA: True
+    USE_SYSTEM_7ZA: true
 
 jobs:
     run-npm-start:
@@ -18,9 +19,12 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "latest"
-                  
+
             - name: Install 7-Zip
               run: sudo apt-get install p7zip-full
+
+            - name: Add 7za to PATH
+              run: echo "/usr/bin" >> $GITHUB_PATH
 
             - name: Install dependencies
               run: npm install

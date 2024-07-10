@@ -1,4 +1,7 @@
 import fs from "fs";
+import { configDotenv } from "dotenv";
+configDotenv();
+
 import { extractFull } from "node-7z-forall";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -21,7 +24,10 @@ const downloadAndExtract = async (url, filePath, extractPath) => {
         }
 
         console.log("Extracting file...");
-        const extraction = extractFull(filePath, extractPath);
+        const pathTo7za = process.env.USE_SYSTEM_7ZA ? "7za" : undefined;
+        const extraction = extractFull(filePath, extractPath, {
+            pathTo7za,
+        });
 
         extraction
             .then(async function () {

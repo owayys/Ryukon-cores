@@ -16,6 +16,9 @@ jobs:
               uses: actions/setup-node@v2
               with:
                   node-version: "14"
+                  
+            - name: Install 7-Zip
+              run: sudo apt-get install p7zip-full
 
             - name: Install dependencies
               run: npm install

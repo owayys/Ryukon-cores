@@ -2,7 +2,7 @@ name: Run Script every hour
 
 on:
     schedule:
-        - cron: "0 * * * *"
+        - cron: "30 * * * *"
 
 env:
     USE_SYSTEM_7ZA: true

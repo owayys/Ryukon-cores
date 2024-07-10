@@ -2,7 +2,10 @@ import fs from "fs";
 import { configDotenv } from "dotenv";
 configDotenv();
 
-import { extractFull } from "node-7z-forall";
+// import { extractFull } from "node-7z-forall";
+import sevenBin from "7zip-bin";
+import node7z from "node-7z";
+const { extractFull } = node7z;
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -24,62 +27,52 @@ const downloadAndExtract = async (url, filePath, extractPath) => {
         }
 
         console.log("Extracting file...");
-        const pathTo7za = process.env.USE_SYSTEM_7ZA ? "7za" : undefined;
+        const pathTo7za = sevenBin.path7za;
         const extraction = extractFull(filePath, extractPath, {
-            pathTo7za,
+            $bin: pathTo7za,
         });
 
-        extraction
-            .then(async function () {
+        extraction.on("end", async () => {
+            try {
                 console.log("Extracting done!");
                 console.log("File extracted successfully.");
 
                 // Find the extracted folder (assuming there's only one)
-                try {
-                    const extractedFolders = await fs.promises.readdir(
-                        extractPath
+                const extractedFolders = await fs.promises.readdir(extractPath);
+                if (extractedFolders.length === 1) {
+                    const extractedFolderPath = path.join(
+                        extractPath,
+                        extractedFolders[0]
                     );
-                    if (extractedFolders.length === 1) {
-                        const extractedFolderPath = path.join(
-                            extractPath,
-                            extractedFolders[0]
-                        );
-                        // console.log(
-                        //     `Moving contents of ${extractedFolderPath} to ${extractPath}`
-                        // );
-                        // await moveFiles(extractedFolderPath, extractPath);
-                        console.log("Zipping Contents...");
-                        await zipFiles(
-                            extractedFolderPath,
-                            `${extractPath}.zip`
-                        );
-                        console.log("Contents zipped successfully.");
+                    console.log("Zipping Contents...");
+                    await zipFiles(extractedFolderPath, `${extractPath}.zip`);
+                    console.log("Contents zipped successfully.");
 
-                        await fs.promises.rmdir(extractedFolderPath);
-                        console.log("Contents moved successfully.");
-                    } else {
-                        // console.log("Unexpected number of extracted folders.");
-                        console.log("Zipping Contents...");
-                        await zipFiles(extractPath, `${extractPath}.zip`);
-                        console.log("Contents zipped successfully.");
-                    }
-                } catch (error) {
-                    console.error("Error:", error);
+                    await fs.promises.rmdir(extractedFolderPath, {
+                        recursive: true,
+                    });
+                    console.log("Contents moved successfully.");
+                } else {
+                    console.log("Zipping Contents...");
+                    await zipFiles(extractPath, `${extractPath}.zip`);
+                    console.log("Contents zipped successfully.");
                 }
 
                 console.log("Deleting downloaded 7z file...");
                 await fs.promises.unlink(filePath);
                 console.log("Downloaded 7z file deleted successfully.");
-                // console.log("Zipping Contents...");
-                // await zipFiles(extractPath, `${extractPath}.zip`);
-                // console.log("Contents zipped successfully.");
+
                 console.log("Deleting extracted folder...");
                 await fs.promises.rmdir(extractPath, { recursive: true });
                 console.log("Extracted folder deleted successfully.");
-            })
-            .catch(function (err) {
-                console.log(err);
-            });
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        });
+
+        extraction.on("error", (err) => {
+            console.error(err);
+        });
     } catch (error) {
         console.error("Error:", error);
     }
